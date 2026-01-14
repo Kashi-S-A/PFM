@@ -22,7 +22,7 @@ public class SecurityConfig {
 		
 		http.csrf( c->c.disable())
 			.authorizeHttpRequests(req -> req
-					.requestMatchers("/register","/login" ,"/register",
+					.requestMatchers("/register","/login",
 				            "/forgot-password",
 				            "/send-otp",
 				            "/verify-otp",
