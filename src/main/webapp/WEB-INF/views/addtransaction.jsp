@@ -177,6 +177,36 @@
     box-sizing: border-box;
 }
 
+/* ===== Success Message ===== */
+		.success-wrapper {
+		    max-width: 520px;
+		    margin: 0 auto 20px;
+		}
+		.success-msg {
+		    width: 520px;
+		    margin-bottom: 22px;
+		    padding: 14px 18px;
+		    border-radius: 14px;
+		    background: linear-gradient(
+		        135deg,
+		        rgba(0, 123, 255, 0.12),
+		        rgba(0, 123, 255, 0.05)
+		    );
+		    color: var(--primary);
+		    font-size: 14px;
+		    font-weight: 600;
+		    display: flex;
+		    align-items: center;
+ 		    justify-content:center;
+		    gap: 10px;
+		    box-shadow: 0 10px 24px rgba(0,0,0,0.08);
+		    border: 1px solid rgba(0,123,255,0.25);
+		}
+
+		/* Success icon */
+		.success-msg i {
+		    font-size: 18px;
+		}
 
 </style>
 </head>
@@ -184,18 +214,29 @@
 <body>
 
 <jsp:include page="navbar.jsp" />
-
+<div class="page-container">
+	
 <%
 java.util.List<com.pfm.entity.Category> ctgs =
     (java.util.List<com.pfm.entity.Category>) request.getAttribute("categories");
+		
+	String msg = (String) request.getAttribute("msg");
+	if (msg != null) {
 %>
 
-<div class="page-container">
+<div class="success-wrapper">
+            <div class="success-msg">
+                <i class="fa-solid fa-circle-check"></i>
+                <span><%= msg %></span>
+            </div>
+        </div>
+    <%
+        }
+    %>
 
     <div class="transaction-card">
         <div class="page-title">Add Transaction</div>
         <div class="page-subtitle">Add a new transaction to track your spending</div>
-		<p style="color : green">${msg}</p>
         <form action="addtransaction" method="post">
 
             <div class="form-group">
