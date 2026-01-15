@@ -1,12 +1,17 @@
 package com.pfm.repo;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.pfm.entity.Transaction;
+import com.pfm.entity.TxnType;
 
 public interface TransactionRepo extends JpaRepository<Transaction, Integer>{
 
 	List<Transaction> findByUserId(Integer uid);
+
+	List<Transaction> findByUserIdAndTypeAndDateBetween(Integer id, TxnType expense, LocalDate fromDate,
+			LocalDate toDate);
 }
