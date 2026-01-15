@@ -36,6 +36,7 @@ public class AuthController {
 	private EmailService emailService;
 	@Autowired
 	private OtpService otpService;
+	
 	@Autowired
 	private UserService userService;
 	
