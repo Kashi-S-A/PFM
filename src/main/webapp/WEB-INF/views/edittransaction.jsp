@@ -3,7 +3,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Add Transaction</title>
+<title>Edit Transaction</title>
 
 <style>
     body {
@@ -177,36 +177,6 @@
     box-sizing: border-box;
 }
 
-/* ===== Success Message ===== */
-		.success-wrapper {
-		    max-width: 520px;
-		    margin: 0 auto 20px;
-		}
-		.success-msg {
-		    width: 520px;
-		    margin-bottom: 22px;
-		    padding: 14px 18px;
-		    border-radius: 14px;
-		    background: linear-gradient(
-		        135deg,
-		        rgba(0, 123, 255, 0.12),
-		        rgba(0, 123, 255, 0.05)
-		    );
-		    color: var(--primary);
-		    font-size: 14px;
-		    font-weight: 600;
-		    display: flex;
-		    align-items: center;
- 		    justify-content:center;
-		    gap: 10px;
-		    box-shadow: 0 10px 24px rgba(0,0,0,0.08);
-		    border: 1px solid rgba(0,123,255,0.25);
-		}
-
-		/* Success icon */
-		.success-msg i {
-		    font-size: 18px;
-		}
 
 </style>
 </head>
@@ -214,45 +184,39 @@
 <body>
 
 <jsp:include page="navbar.jsp" />
-<div class="page-container">
-	
+
 <%
 java.util.List<com.pfm.entity.Category> ctgs =
     (java.util.List<com.pfm.entity.Category>) request.getAttribute("categories");
-		
-	String msg = (String) request.getAttribute("msg");
-	if (msg != null) {
+
+com.pfm.dto.TransactionDTO txn = (com.pfm.dto.TransactionDTO)request.getAttribute("dto");
 %>
 
-<div class="success-wrapper">
-            <div class="success-msg">
-                <i class="fa-solid fa-circle-check"></i>
-                <span><%= msg %></span>
-            </div>
-        </div>
-    <%
-        }
-    %>
+<div class="page-container">
 
     <div class="transaction-card">
-        <div class="page-title">Add Transaction</div>
-        <div class="page-subtitle">Add a new transaction to track your spending</div>
-        <form action="addtransaction" method="post">
-
+        <div class="page-title">Edit Transaction</div>
+        <div class="page-subtitle">Edit an existing transaction</div>
+		<p style="color : green">${msg}</p>
+        <form action="edittransaction?id=<%=txn.getId()%>" method="post">
+        
+          <input type="hidden" name="id"  value="" >
+        
+      
             <div class="form-group">
                 <div class="field-label">
                     <i class="fa-solid fa-indian-rupee-sign"></i>
                     <span>Amount</span>
                 </div>
-                <input type="number" name="amount" placeholder="Enter amount" required>
+                <input type="number" name="amount" placeholder="Enter amount" value="<%=txn.getAmount()%>" required>
             </div>
-
+			
             <div class="form-group">
                 <div class="field-label">
                     <i class="fa-solid fa-file-lines"></i>
                     <span>Description</span>
                 </div>
-                <input type="text" name="description" placeholder="Enter Description" >
+                <input type="text" name="description" placeholder="Enter Description" value="<%=txn.getDescription() %>" required>
             </div>
 
             <div class="form-group">
@@ -260,7 +224,7 @@ java.util.List<com.pfm.entity.Category> ctgs =
                     <i class="fa-solid fa-calendar-days"></i>
                     <span>Date</span>
                 </div>
-                <input type="date" name="date" required>
+                <input type="date" name="date" value="<%=txn.getDate()%>" required>
             </div>
 
             <div class="form-group">
@@ -269,7 +233,7 @@ java.util.List<com.pfm.entity.Category> ctgs =
                     <span>Category</span>
                 </div>
                 <select name="catId" required>
-                    <option value="">Select Category</option>
+                    <option value="<%=txn.getCategory().getId()%>"><%=txn.getCategory().getName()%></option>
                     <%
                     if (ctgs != null && !ctgs.isEmpty()) {
                         for (com.pfm.entity.Category c : ctgs) {
@@ -286,7 +250,7 @@ java.util.List<com.pfm.entity.Category> ctgs =
                 </select>
             </div>
 
-            <button class="save-btn">Save Transaction</button>
+            <button class="save-btn">Update Transaction</button>
         </form>
     </div>
 

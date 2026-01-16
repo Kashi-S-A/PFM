@@ -1,11 +1,15 @@
 package com.pfm.serviceimpl;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 import com.pfm.service.EmailService;
+import com.pfm.service.util.HtmlEmailUtil;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -14,6 +18,8 @@ public class EmailServiceImpl implements EmailService {
 	@Autowired
 	private JavaMailSender javaMailSender;
 
+	@Autowired
+	private HtmlEmailUtil htmlEmailUtil;
 	
 	public void sendMailWithTemplate(String toEmail, String subject, String username)
 	        throws MessagingException {
