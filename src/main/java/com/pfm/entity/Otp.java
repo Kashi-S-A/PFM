@@ -26,5 +26,8 @@ public class Otp {
 
     private LocalDateTime expiryTime;
 
+
+
+
     // getters & setters
 }

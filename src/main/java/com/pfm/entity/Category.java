@@ -24,4 +24,7 @@ public class Category {
 	
 	@Enumerated(EnumType.STRING)
 	private TxnType type;
+
+	
+	
 }

@@ -1,6 +1,7 @@
 package com.pfm.controller;
 
 import java.security.Principal;
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,9 +11,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.pfm.dto.FilterTranscationDTO;
 import com.pfm.dto.TransactionDTO;
 import com.pfm.entity.Category;
 import com.pfm.entity.Transaction;
+import com.pfm.entity.TxnType;
 import com.pfm.entity.User;
 import com.pfm.repo.CategoryRepo;
 import com.pfm.repo.TransactionRepo;
@@ -72,6 +75,10 @@ public class TransactionController {
 		List<Transaction> txns = transactionRepo.findByUserId(user.getId());
 
 		model.addAttribute("txns", txns);
+		
+		model.addAttribute("categories", categoryRepo.findAll());
+	    model.addAttribute("filter", new FilterTranscationDTO());
+
 
 		return "transactions";
 	}
@@ -113,5 +120,33 @@ public class TransactionController {
 		return "redirect:/transactions";
 	}
 	
+}
+
+	@PostMapping("/filter-transactions")
+	public String filterTransaction(Principal principal,
+	                                FilterTranscationDTO trans,
+	                                Model model) {
+
+	    User user = userRepo.findByEmail(principal.getName())
+	            .orElseThrow(() -> new RuntimeException("User not found"));
+
+	    TxnType type = trans.getType();
+	    Long catId = trans.getCategory();
+
+	    LocalDate from = (trans.getFromDate() == null || trans.getFromDate().isEmpty())
+	            ? null : LocalDate.parse(trans.getFromDate());
+
+	    LocalDate to = (trans.getToDate() == null || trans.getToDate().isEmpty())
+	            ? null : LocalDate.parse(trans.getToDate());
+
+	    List<Transaction> txns =
+	            transactionRepo.filterTrans(user.getId(), type, catId, from, to);
+
+	    model.addAttribute("txns", txns);
+	    model.addAttribute("categories", categoryRepo.findAll());
+	    model.addAttribute("filter", trans); // keep selected values
+
+	    return "transactions";
+	}
 
 }
