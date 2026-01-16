@@ -276,7 +276,138 @@
     box-sizing: border-box;
 }
     
-    
+/* ===== ACTION BUTTONS (EDIT / DELETE) ===== */
+.action-cell {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.action-btn {
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+
+    border: none;              
+    outline: none;
+    background: transparent;   
+    cursor: pointer;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    transition: all 0.25s ease;
+}
+
+
+/* Edit Button */
+.edit-btn {
+    background: #e0e7ff;
+    color: #1e3a8a;
+}
+
+.edit-btn:hover {
+    background: #c7d2fe;
+    transform: translateY(-1px);
+}
+
+/* Delete Button */
+.delete-btn {
+    background: #ffe4e6;   
+    color: #9f1239;
+}
+
+.delete-btn:hover {
+    background: #fecdd3;
+    transform: translateY(-1px);
+}
+
+
+/* ===== DELETE MODAL ===== */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+}
+
+.modal-box {
+    background: #ffffff;
+    width: 360px;
+    padding: 26px;
+    text-align: center;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.25);
+    animation: scaleIn 0.25s ease;
+}
+
+.modal-box h3 {
+    margin: 0 0 10px;
+    font-size: 20px;
+    color: #1e293b;
+}
+
+.modal-box p {
+    font-size: 14px;
+    color: #475569;
+    margin-bottom: 22px;
+    line-height: 1.5;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.modal-btn {
+    flex: 1;
+    height: 42px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+}
+
+/* Buttons */
+.cancel-btn {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.cancel-btn:hover {
+    background: #d1d5db;
+}
+
+.confirm-btn {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    color: #ffffff;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.confirm-btn:hover {
+    opacity: 0.95;
+}
+
+/* Animation */
+@keyframes scaleIn {
+    from {
+        transform: scale(0.92);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+
 </style>
 </head>
 
@@ -384,10 +515,27 @@ java.util.List<com.pfm.entity.Category> ctgs =
                         				<td><%=txn.getCategory().getName()%></td>
                         				<td><%=txn.getType()%></td>
                         				<td><%=txn.getAmount()%></td>
-                        				<td>
-                        					<a href="/edit?tid=<%= txn.getId()%>">Edit</a>
-                        					<a href="/delete?tid=<%= txn.getId()%>">Delete</a>
-                        				</td>
+										
+									<!--	<td class="action-cell">
+										    <a class="action-btn edit-btn" href="/edit?tid=<%= txn.getId()%>">Edit</a>
+										    <a class="action-btn delete-btn" href="/delete?tid=<%= txn.getId()%>"
+										       onclick="return confirm('Are you sure you want to delete this transaction?');">
+										       Delete
+										    </a>
+										</td>
+									-->
+									<td class="action-cell">
+									    <a class="action-btn edit-btn" href="/edit?tid=<%= txn.getId()%>">Edit</a>
+
+									    <button 
+									        type="button"
+									        class="action-btn delete-btn"
+									        onclick="openDeleteModal(<%= txn.getId() %>)">
+									        Delete
+									    </button>
+									</td>
+
+										
                     			</tr>
                     <%
                     		}
@@ -405,6 +553,20 @@ java.util.List<com.pfm.entity.Category> ctgs =
 
     </div>
 </div>
+
+<!-- DELETE CONFIRM MODAL -->
+<div id="deleteModal" class="modal-overlay">
+    <div class="modal-box">
+        <h3>Delete Transaction</h3>
+        <p>Are you sure you want to delete this transaction?<br>This action cannot be undone.</p>
+
+        <div class="modal-actions">
+            <button class="modal-btn cancel-btn" onclick="closeDeleteModal()">Cancel</button>
+            <a id="confirmDeleteBtn" class="modal-btn confirm-btn">Delete</a>
+        </div>
+    </div>
+</div>
+
 
 </body>
 
@@ -494,6 +656,27 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
 });
+
+//
+function openDeleteModal(tid) {
+    const modal = document.getElementById("deleteModal");
+    const confirmBtn = document.getElementById("confirmDeleteBtn");
+
+    confirmBtn.href = "/delete?tid=" + tid;
+    modal.style.display = "flex";
+}
+
+function closeDeleteModal() {
+    document.getElementById("deleteModal").style.display = "none";
+}
+
+/* Close modal on background click */
+document.getElementById("deleteModal").addEventListener("click", e => {
+    if (e.target.id === "deleteModal") {
+        closeDeleteModal();
+    }
+});
+
 </script>
 
 
