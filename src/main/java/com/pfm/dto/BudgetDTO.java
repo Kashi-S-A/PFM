@@ -12,7 +12,5 @@ public class BudgetDTO {
 	private Integer catId;
 	
 	private Double amount;
-	
-//	private Category category;
 
 }

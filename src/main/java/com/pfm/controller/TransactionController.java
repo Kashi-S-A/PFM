@@ -120,6 +120,7 @@ public class TransactionController {
 		return "redirect:/transactions";
 	}
 	
+}
 
 	@PostMapping("/filter-transactions")
 	public String filterTransaction(Principal principal,
