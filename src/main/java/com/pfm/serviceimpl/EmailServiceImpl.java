@@ -21,94 +21,43 @@ public class EmailServiceImpl implements EmailService {
 	@Autowired
 	private HtmlEmailUtil htmlEmailUtil;
 	
-	public void sendMailWithTemplate(String toEmail,String subject, String username) throws MessagingException {
-		
-		    String htmlContent = """
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <style>
-                    body { font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; }
-                    .container { background: white; padding: 20px; border-radius: 10px; }
-                    h1 { color: #4CAF50; }
-                    p { font-size: 16px; }
-                    .footer { margin-top: 20px; font-size: 12px; color: gray; }
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <h1>Welcome, username</h1>
-                    <p>Thank you for registering in our Personal Finance Management System.</p>
-                    <p>We are excited to have you on board.</p>
-                    <div class="footer">
-                        &copy; 2026 Personal Finance Management System
-                    </div>
-                </div>
-            </body>
-            </html>
-            """;
+	public void sendMailWithTemplate(String toEmail, String subject, String username)
+	        throws MessagingException {
 
-        
-        htmlContent = String.format(htmlContent, username);
+	    String htmlContent = """
+	    <!DOCTYPE html>
+	    <html>
+	    <head>
+	        <meta charset="UTF-8">
+	        <style>
+	            body { font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; }
+	            .container { background: white; padding: 20px; border-radius: 10px; }
+	            h1 { color: #4CAF50; }
+	            p { font-size: 16px; }
+	            .footer { margin-top: 20px; font-size: 12px; color: gray; }
+	        </style>
+	    </head>
+	    <body>
+	        <div class="container">
+	            <h1>Welcome, %s</h1>
+	            <p>Thank you for registering in our Personal Finance Management System.</p>
+	            <p>We are excited to have you on board.</p>
+	            <div class="footer">
+	                &copy; 2026 Personal Finance Management System
+	            </div>
+	        </div>
+	    </body>
+	    </html>
+	    """;
 
-      
-        MimeMessage message = javaMailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message, true);
-        helper.setTo(toEmail);
-        helper.setSubject(subject);
-        helper.setText(htmlContent, true); 
-        javaMailSender.send(message);
-        System.out.println("Email sent successfully to " + toEmail);
-    }
+	    htmlContent = String.format(htmlContent, username);
 
+	    MimeMessage message = javaMailSender.createMimeMessage();
+	    MimeMessageHelper helper = new MimeMessageHelper(message, true);
+	    helper.setTo(toEmail);
+	    helper.setSubject(subject);
+	    helper.setText(htmlContent, true);
 
-	@Override
-	public void sendOtpEmail(String toEmail, String otp) {
-		try {
-		    String html = htmlEmailUtil.getHtmlContent("otp-email.html");
-
-		    Map<String, String> values = new HashMap<>();
-		    values.put("otp", otp);
-		    html = htmlEmailUtil.replacePlaceholders(html, values);
-
-		    MimeMessage message = javaMailSender.createMimeMessage();
-		    MimeMessageHelper helper = new MimeMessageHelper(message, true);
-
-		    helper.setTo(toEmail);
-		    helper.setSubject("Password Reset OTP");
-		    helper.setText(html, true);
-
-		    javaMailSender.send(message);
-
-		} catch (Exception e) {
-		    e.printStackTrace();
-		}
-		
-	}
-
-
-	@Override
-	public void sendPasswordResetSuccessEmail(String toEmail, String name) {
-		try {
-		    String html = htmlEmailUtil.getHtmlContent("password-reset-success.html");
-
-		    Map<String, String> values = new HashMap<>();
-		    values.put("name", name);
-		    html = htmlEmailUtil.replacePlaceholders(html, values);
-
-		    MimeMessage message = javaMailSender.createMimeMessage();
-		    MimeMessageHelper helper = new MimeMessageHelper(message, true);
-
-		    helper.setTo(toEmail);
-		    helper.setSubject("Password Updated Successfully");
-		    helper.setText(html, true);
-
-		    javaMailSender.send(message);
-
-		} catch (Exception e) {
-		    e.printStackTrace();
-		}
-		
+	    javaMailSender.send(message);
 	}
 }
