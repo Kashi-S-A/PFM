@@ -407,6 +407,61 @@
     }
 }
 
+/* ===== DASHBOARD SUCCESS MESSAGE ===== */
+.alert-success {
+    max-width: 880px;
+    margin: 18px auto 28px;
+    padding: 14px 20px;
+
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    background: #ffffff;
+    color: #0f766e;
+
+    border-radius: 16px;
+    border-left: 6px solid #22c55e;
+
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.08);
+
+    font-size: 14.5px;
+    font-weight: 600;
+
+    animation: slideFadeIn 0.4s ease;
+}
+
+/* Icon */
+.alert-success::before {
+    content: "✓";
+    width: 28px;
+    height: 28px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: #22c55e;
+    color: #ffffff;
+
+    border-radius: 50%;
+    font-size: 15px;
+    flex-shrink: 0;
+}
+
+/* Entrance animation */
+@keyframes slideFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
 
 </style>
 </head>
@@ -423,6 +478,18 @@ java.util.List<com.pfm.entity.Category> ctgs =
 		 (java.util.List<com.pfm.entity.Transaction>) request.getAttribute("txns");
 
 %>
+
+<%
+    String successMessage = (String) request.getAttribute("successMessage");
+%>
+
+<% if (successMessage != null) { %>
+    <div class="alert-success">
+        <%= successMessage %>
+    </div>
+<% } %>
+
+
 
 <div class="page-container">
     <div class="content-grid">
@@ -516,14 +583,7 @@ java.util.List<com.pfm.entity.Category> ctgs =
                         				<td><%=txn.getType()%></td>
                         				<td><%=txn.getAmount()%></td>
 										
-									<!--	<td class="action-cell">
-										    <a class="action-btn edit-btn" href="/edit?tid=<%= txn.getId()%>">Edit</a>
-										    <a class="action-btn delete-btn" href="/delete?tid=<%= txn.getId()%>"
-										       onclick="return confirm('Are you sure you want to delete this transaction?');">
-										       Delete
-										    </a>
-										</td>
-									-->
+									
 									<td class="action-cell">
 									    <a class="action-btn edit-btn" href="/edit?tid=<%= txn.getId()%>">Edit</a>
 
@@ -677,7 +737,14 @@ document.getElementById("deleteModal").addEventListener("click", e => {
     }
 });
 
+    setTimeout(() => {
+        const alert = document.querySelector('.alert-success');
+        if (alert) {
+            alert.style.opacity = '0';
+            alert.style.transform = 'translateY(-6px)';
+            setTimeout(() => alert.remove(), 400);
+        }
+    }, 3000);
+
 </script>
-
-
 </html>

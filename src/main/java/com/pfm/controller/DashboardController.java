@@ -113,6 +113,7 @@ public class DashboardController {
         //CHART 4: BUDGET vs EXPENSE 
         List<Budget> budgets = budgetRepo.findByUserId(user.getId());//Logged in users budget 
         List<Transaction> expense = transactionRepo.findByUserId(user.getId());//Logged in users budget 
+
         
         Map<String , Double> budgetMap = new LinkedHashMap<>();
         for(Budget b : budgets) {
@@ -122,7 +123,8 @@ public class DashboardController {
         Map<String, Double> expenseMap = new LinkedHashMap<>();
         for(Transaction e : expense) {
         	String category = e.getCategory().getName();
-        	expenseMap.put(category, 
+        	expenseMap.put(
+        			category, 
         			expenseMap.getOrDefault(category, 0.0) + e.getAmount());
         }
         
