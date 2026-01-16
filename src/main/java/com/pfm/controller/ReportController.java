@@ -51,7 +51,7 @@ public class ReportController {
 		byte[] pdfData = reportService.generatePdf(transactions);
 
 		response.setContentType("application/pdf");
-		response.setHeader("Content-Disposition", "attachment; filename=monthly_report.pdf");
+		response.setHeader("Content-Disposition", "attachment; filename=transactions_report.pdf");
 		response.getOutputStream().write(pdfData);
 	}
 

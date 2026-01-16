@@ -428,7 +428,7 @@ java.util.List<com.pfm.entity.Category> ctgs =
     <div class="content-grid">
 
         <!-- FILTERS -->
-        <form class="filters-card" action="filterTransactions" method="get">
+        <form class="filters-card" action="filter-transactions" method="post">
 
             <h3>Filters</h3>
 
@@ -448,7 +448,7 @@ java.util.List<com.pfm.entity.Category> ctgs =
                     <i class="fa-solid fa-tags"></i>
                     <span>Category</span>
                 </div>
-                <select name="catId" required>
+                <select name="catId">
                     <option value="">Select Category</option>
                     <%
                     if (ctgs != null && !ctgs.isEmpty()) {

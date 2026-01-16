@@ -120,8 +120,6 @@ public class TransactionController {
 		return "redirect:/transactions";
 	}
 	
-}
-
 	@PostMapping("/filter-transactions")
 	public String filterTransaction(Principal principal,
 	                                FilterTranscationDTO trans,
@@ -148,5 +146,12 @@ public class TransactionController {
 
 	    return "transactions";
 	}
+	
+	@GetMapping("/delete")
+	public String deleteTransaction(@RequestParam Integer tid) {
+		transactionRepo.deleteById(tid);
+		return "redirect:/transactions";
+	}
+	
 
 }

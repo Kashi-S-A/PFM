@@ -1,7 +1,5 @@
 package com.pfm.service;
 
-import java.util.Optional;
-
 import com.pfm.entity.Otp;
 
 public interface OtpService {

@@ -2,7 +2,6 @@ package com.pfm.controller;
 
 import java.security.Principal;
 import java.time.LocalDate;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -87,16 +86,12 @@ public class DashboardController {
         
         Double totalIncome = 0.0;
         for(Transaction i : incomes) {
-        	String category = i.getCategory().getName();
-        	Double amount = i.getAmount();
         	
         	totalIncome += i.getAmount();
         }
         
         Double totalExpense = 0.0;
         for(Transaction e : expenses) {
-        	String category = e.getCategory().getName();
-        	Double amount = e.getAmount();
         	
         	totalExpense += e.getAmount();
         }
@@ -107,9 +102,6 @@ public class DashboardController {
       //Chart 3: Expense Trend-Line - expenses change over time, as expenses is already fetched above
         Map<LocalDate, Double> dateExpenseMap = new LinkedHashMap<>();
         for(Transaction e : expenses) {
-        	LocalDate date = e.getDate();
-        	Double amount = e.getAmount();
-        	
         		dateExpenseMap.put(
         				e.getDate(), 
         				dateExpenseMap.getOrDefault(e.getDate(), 0.0) + e.getAmount()
@@ -119,8 +111,8 @@ public class DashboardController {
         model.addAttribute("dateExpenseMap", dateExpenseMap);
 
         //CHART 4: BUDGET vs EXPENSE 
-        List<Budget> budgets = budgetRepo.findAll();
-        List<Transaction> expense = transactionRepo.findAll();
+        List<Budget> budgets = budgetRepo.findByUserId(user.getId());//Logged in users budget 
+        List<Transaction> expense = transactionRepo.findByUserId(user.getId());//Logged in users budget 
         
         Map<String , Double> budgetMap = new LinkedHashMap<>();
         for(Budget b : budgets) {

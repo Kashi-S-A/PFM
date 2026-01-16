@@ -65,7 +65,7 @@ public class ReportServiceImpl implements ReportService {
 
 			// Title
 			Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 22, new Color(30, 41, 59));
-			Paragraph title = new Paragraph("Monthly Transactions Report", titleFont);
+			Paragraph title = new Paragraph("Transactions Report", titleFont);
 			title.setAlignment(Element.ALIGN_CENTER);
 			title.setSpacingAfter(10f);
 			document.add(title);

@@ -18,10 +18,8 @@ import com.pfm.entity.User;
 import com.pfm.repo.UserRepo;
 import com.pfm.service.EmailService;
 import com.pfm.service.OtpService;
-import com.pfm.serviceimpl.UserService;
 
 import jakarta.mail.MessagingException;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 
 @Controller
@@ -36,9 +34,6 @@ public class AuthController {
 	private EmailService emailService;
 	@Autowired
 	private OtpService otpService;
-	
-	@Autowired
-	private UserService userService;
 	
 	@GetMapping("/register")
 	public String registerPage(Model model) {

@@ -16,7 +16,7 @@ public interface TransactionRepo extends JpaRepository<Transaction, Integer> {
 
 	List<Transaction> findByUserIdAndTypeAndDateBetween(Integer id, TxnType expense, LocalDate fromDate,
 			LocalDate toDate);
-}
+
     @Query("""
       SELECT t FROM Transaction t
       WHERE t.user.id = :userId
@@ -33,5 +33,4 @@ public interface TransactionRepo extends JpaRepository<Transaction, Integer> {
             @Param("toDate") LocalDate toDate
     );
 
-	List<Transaction> findByUserId(Integer id);
 }
