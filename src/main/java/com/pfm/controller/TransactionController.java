@@ -1,13 +1,14 @@
 package com.pfm.controller;
 
 import java.security.Principal;
-import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -15,12 +16,11 @@ import com.pfm.dto.FilterTranscationDTO;
 import com.pfm.dto.TransactionDTO;
 import com.pfm.entity.Category;
 import com.pfm.entity.Transaction;
-import com.pfm.entity.TxnType;
 import com.pfm.entity.User;
 import com.pfm.repo.CategoryRepo;
 import com.pfm.repo.TransactionRepo;
 import com.pfm.repo.UserRepo;
-
+import com.pfm.service.TransactionService;
 
 @Controller
 public class TransactionController {
@@ -33,6 +33,9 @@ public class TransactionController {
 
 	@Autowired
 	private TransactionRepo transactionRepo;
+
+	@Autowired
+	private TransactionService transactionService;
 
 	@GetMapping("/addtransaction")
 	public String addtransaction(Model model, @RequestParam(required = false) String msg) {
@@ -68,90 +71,85 @@ public class TransactionController {
 	}
 
 	@GetMapping("/transactions")
-	public String transactionPage(Principal principal, Model model) {
-		String email = principal.getName();
-		User user = userRepo.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+	public String transactionPage(Principal principal, @ModelAttribute FilterTranscationDTO filter,
+			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "5") int size, Model model) {
 
-		List<Transaction> txns = transactionRepo.findByUserId(user.getId());
+		User user = userRepo.findByEmail(principal.getName()).orElseThrow(() -> new RuntimeException("User not found"));
 
-		model.addAttribute("txns", txns);
-		
+		Page<Transaction> txnPage = transactionService.getFilteredTransactions(filter, user.getId(), page, size);
+
+		model.addAttribute("txns", txnPage.getContent());
+		model.addAttribute("totalPages", txnPage.getTotalPages());
+		model.addAttribute("currentPage", page);
+
 		model.addAttribute("categories", categoryRepo.findAll());
-	    model.addAttribute("filter", new FilterTranscationDTO());
+		model.addAttribute("filter", filter);
+		model.addAttribute("selectedType", filter.getType() != null ? filter.getType().name() : "");
 
+		return "transactions";
+	}
+
+	@PostMapping("transactions")
+	public String filterTransaction(Principal principal, @ModelAttribute FilterTranscationDTO filter,
+			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "5") int size, Model model) {
+		User user = userRepo.findByEmail(principal.getName()).orElseThrow(() -> new RuntimeException("User not found"));
+
+		Page<Transaction> txnPage = transactionService.getFilteredTransactions(filter, user.getId(), page, size);
+
+		model.addAttribute("txns", txnPage.getContent());
+		model.addAttribute("totalPages", txnPage.getTotalPages());
+		model.addAttribute("currentPage", page);
+
+		model.addAttribute("categories", categoryRepo.findAll());
+		model.addAttribute("filter", filter);
+		model.addAttribute("selectedType", filter.getType() != null ? filter.getType().name() : "");
 
 		return "transactions";
 	}
 
 	@GetMapping("/edit")
-	public String EditTransactionPage(@RequestParam Integer tid,Model model) {
+	public String EditTransactionPage(@RequestParam Integer tid, Model model) {
 
 		Transaction txn = transactionRepo.findById(tid)
 				.orElseThrow(() -> new RuntimeException("Transaction not found"));
-		
+
 		TransactionDTO dto = new TransactionDTO();
 		dto.setId(txn.getId());
 		dto.setAmount(txn.getAmount());
 		dto.setDescription(txn.getDescription());
 		dto.setDate(txn.getDate());
 		dto.setCategory(txn.getCategory());
-		
+
 		model.addAttribute("dto", dto);
 		List<Category> categories = categoryRepo.findAll();
 		model.addAttribute("categories", categories);
 
 		return "edittransaction";
 	}
-	
+
 	@PostMapping("/edittransaction")
 	public String EditTransaction(TransactionDTO dto) {
-		
-		Transaction txn = transactionRepo.findById(dto.getId()).orElseThrow(()-> new RuntimeException("Txn not found"));
-		
+
+		Transaction txn = transactionRepo.findById(dto.getId())
+				.orElseThrow(() -> new RuntimeException("Txn not found"));
+
 		txn.setAmount(dto.getAmount());
 		txn.setDescription(dto.getDescription());
 		txn.setDate(dto.getDate());
-		
-		Category category = categoryRepo.findById(dto.getCatId()).orElseThrow(()-> new RuntimeException("Txn not found"));
+
+		Category category = categoryRepo.findById(dto.getCatId())
+				.orElseThrow(() -> new RuntimeException("Txn not found"));
 		txn.setCategory(category);
 		txn.setType(category.getType());
-		
+
 		transactionRepo.save(txn);
 		return "redirect:/transactions";
 	}
-	
-	@PostMapping("/filter-transactions")
-	public String filterTransaction(Principal principal,
-	                                FilterTranscationDTO trans,
-	                                Model model) {
 
-	    User user = userRepo.findByEmail(principal.getName())
-	            .orElseThrow(() -> new RuntimeException("User not found"));
-
-	    TxnType type = trans.getType();
-	    Long catId = trans.getCategory();
-
-	    LocalDate from = (trans.getFromDate() == null || trans.getFromDate().isEmpty())
-	            ? null : LocalDate.parse(trans.getFromDate());
-
-	    LocalDate to = (trans.getToDate() == null || trans.getToDate().isEmpty())
-	            ? null : LocalDate.parse(trans.getToDate());
-
-	    List<Transaction> txns =
-	            transactionRepo.filterTrans(user.getId(), type, catId, from, to);
-
-	    model.addAttribute("txns", txns);
-	    model.addAttribute("categories", categoryRepo.findAll());
-	    model.addAttribute("filter", trans); // keep selected values
-
-	    return "transactions";
-	}
-	
 	@GetMapping("/delete")
 	public String deleteTransaction(@RequestParam Integer tid) {
 		transactionRepo.deleteById(tid);
 		return "redirect:/transactions";
 	}
-	
 
 }

@@ -1,4 +1,6 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <!DOCTYPE html>
 <html>
 <head>
@@ -112,6 +114,11 @@
     .type-btn:hover {
         background: #c7d2fe;
     }
+	
+	.type-btn.active {
+	    background: #1e3a8a;
+	    color: #fff;
+	}
 
     .apply-btn {
         width: 100%;
@@ -217,6 +224,62 @@
     width: 100%;
     cursor: pointer;
 }
+
+/* ===== PAGINATION ===== */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 22px;
+    padding-top: 14px;
+    border-top: 1px solid #e2e8f0;
+}
+
+/* Pagination links */
+.pagination a {
+    min-width: 38px;
+    height: 38px;
+    padding: 0 12px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+
+    border-radius: 10px;
+    border: 1px solid #c7d2fe;
+
+    background: #ffffff;
+    color: #1e3a8a;
+
+    transition: all 0.25s ease;
+}
+
+/* Hover effect */
+.pagination a:hover {
+    background: #eef2ff;
+    transform: translateY(-1px);
+}
+
+/* Active page */
+.pagination a.active {
+    background: linear-gradient(135deg, #2563eb, #1e3a8a);
+    color: #ffffff;
+    border-color: transparent;
+    box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35);
+}
+
+/* Optional disabled look */
+.pagination a.disabled {
+    pointer-events: none;
+    opacity: 0.5;
+}
+
+
 
 /* Dropdown panel */
 .enhanced-select .dropdown {
@@ -416,19 +479,15 @@
 <jsp:include page="navbar.jsp" />
 
 <%
-java.util.List<com.pfm.entity.Category> ctgs =
-    (java.util.List<com.pfm.entity.Category>) request.getAttribute("categories");
-
  java.util.List<com.pfm.entity.Transaction> txns = 
 		 (java.util.List<com.pfm.entity.Transaction>) request.getAttribute("txns");
-
 %>
 
 <div class="page-container">
     <div class="content-grid">
 
         <!-- FILTERS -->
-        <form class="filters-card" action="filter-transactions" method="post">
+        <form class="filters-card" action="transactions" method="post">
 
             <h3>Filters</h3>
 
@@ -437,10 +496,11 @@ java.util.List<com.pfm.entity.Category> ctgs =
                     <i class="fa-solid fa-list"></i>
                     <span>Type</span>
                 </div>
-                <div class="type-buttons">
-                    <button type="submit" name="type" value="INCOME" class="type-btn">INCOME</button>
-                    <button type="submit" name="type" value="EXPENSE" class="type-btn">EXPENSE</button>
-                </div>
+				<div class="type-buttons">
+				    <button type="button" class="type-btn ${selectedType == 'EXPENSE' ? 'active' : ''}" data-type="EXPENSE">EXPENSE</button>
+				    <button type="button" class="type-btn ${selectedType == 'INCOME' ? 'active' : ''}" data-type="INCOME">INCOME</button>
+				</div>
+				<input type="hidden" name="type" id="typeInput" value="${selectedType}">
             </div>
 
             <div class="filter-group">
@@ -448,22 +508,24 @@ java.util.List<com.pfm.entity.Category> ctgs =
                     <i class="fa-solid fa-tags"></i>
                     <span>Category</span>
                 </div>
-                <select name="catId">
-                    <option value="">Select Category</option>
-                    <%
-                    if (ctgs != null && !ctgs.isEmpty()) {
-                        for (com.pfm.entity.Category c : ctgs) {
-                    %>
-                        <option value="<%=c.getId()%>"><%=c.getName()%></option>
-                    <%
-                        }
-                    } else {
-                    %>
-                        <option disabled>No Categories Found</option>
-                    <%
-                    }
-                    %>
-                </select>
+               
+				<select name="category"> 
+				    <option value="">Select Category</option>
+
+				    <c:choose>
+				        <c:when test="${not empty categories}">
+				            <c:forEach var="c" items="${categories}">
+				                <option value="${c.id}" 
+				                    ${filter.category != null && filter.category == c.id ? "selected" : ""}>
+				                    ${c.name}
+				                </option>
+				            </c:forEach>
+				        </c:when>
+				        <c:otherwise>
+				            <option disabled>No Categories Found</option>
+				        </c:otherwise>
+				    </c:choose>
+				</select>
             </div>
 
             <div class="filter-group">
@@ -471,7 +533,7 @@ java.util.List<com.pfm.entity.Category> ctgs =
                     <i class="fa-solid fa-calendar"></i>
                     <span>From Date</span>
                 </div>
-                <input type="date" name="fromDate">
+                <input type="date" name="fromDate" value="${filter.fromDate}">
             </div>
 
             <div class="filter-group">
@@ -479,11 +541,15 @@ java.util.List<com.pfm.entity.Category> ctgs =
                     <i class="fa-solid fa-calendar-check"></i>
                     <span>To Date</span>
                 </div>
-                <input type="date" name="toDate">
+                <input type="date" name="toDate" value="${filter.toDate}">
             </div>
 
             <button class="apply-btn">Apply Filters</button>
-            <button type="button" class="clear-btn" onclick="clearFilters()">Clear Filters</button>
+			<button type="button"
+			        class="clear-btn"
+			        onclick="window.location.href='transactions'">
+			    Clear Filters
+			</button>
             
         </form>
 
@@ -502,53 +568,90 @@ java.util.List<com.pfm.entity.Category> ctgs =
                         <th>Action</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <%
-                    	if(txns!=null && !txns.isEmpty())
-                    	{
-                    		for(com.pfm.entity.Transaction txn : txns)
-                    		{
-                    %>		
-                    			 <tr>
-                        				<td><%=txn.getDate() %></td>
-                        				<td><%=txn.getDescription()%></td>
-                        				<td><%=txn.getCategory().getName()%></td>
-                        				<td><%=txn.getType()%></td>
-                        				<td><%=txn.getAmount()%></td>
-										
-									<!--	<td class="action-cell">
-										    <a class="action-btn edit-btn" href="/edit?tid=<%= txn.getId()%>">Edit</a>
-										    <a class="action-btn delete-btn" href="/delete?tid=<%= txn.getId()%>"
-										       onclick="return confirm('Are you sure you want to delete this transaction?');">
-										       Delete
-										    </a>
-										</td>
-									-->
-									<td class="action-cell">
-									    <a class="action-btn edit-btn" href="/edit?tid=<%= txn.getId()%>">Edit</a>
+				<tbody>
+				    <c:choose>
+				        <c:when test="${not empty txns}">
+				            <c:forEach var="txn" items="${txns}">
+				                <tr>
+				                    <td>${txn.date}</td>
+				                    <td>${txn.description}</td>
+				                    <td>${txn.category.name}</td>
+				                    <td>${txn.type}</td>
+				                    <td>${txn.amount}</td>
 
-									    <button 
-									        type="button"
-									        class="action-btn delete-btn"
-									        onclick="openDeleteModal(<%= txn.getId() %>)">
-									        Delete
-									    </button>
-									</td>
+				                    <td class="action-cell">
+				                        <a class="action-btn edit-btn" href="/edit?tid=${txn.id}">Edit</a>
 
-										
-                    			</tr>
-                    <%
-                    		}
-                    	}else{
-                    %>
-                   				<tr>
-                        				<td colspan="6" class="no-data">No Transactions Found</td>
-                    			</tr>
-                    <%
-                    	}
-                    %>
-                </tbody>
-            </table>
+				                        <button 
+				                            type="button"
+				                            class="action-btn delete-btn"
+				                            onclick="openDeleteModal(${txn.id})">
+				                            Delete
+				                        </button>
+				                    </td>
+				                </tr>
+				            </c:forEach>
+				        </c:when>
+
+				        <c:otherwise>
+				            <tr>
+				                <td colspan="6" class="no-data">No Transactions Found</td>
+				            </tr>
+				        </c:otherwise>
+				    </c:choose>
+				</tbody>
+			</table>
+
+			<!-- ===== PAGINATION ===== -->
+			<c:if test="${totalPages > 1}">
+			    <div class="pagination">
+
+			        <c:set var="typeParam" value="${filter.type != null ? filter.type : ''}" />
+			        <c:set var="categoryParam" value="${filter.category != null ? filter.category : ''}" />
+			        <c:set var="fromDateParam" value="${filter.fromDate != null ? filter.fromDate : ''}" />
+			        <c:set var="toDateParam" value="${filter.toDate != null ? filter.toDate : ''}" />
+
+			        <!-- Previous Button -->
+			        <c:if test="${currentPage > 0}">
+			            <a class="page-btn" href="transactions?page=${currentPage - 1}
+			                <c:if test='${typeParam != ""}'> &type=${typeParam}</c:if>
+			                <c:if test='${categoryParam != ""}'> &category=${categoryParam}</c:if>
+			                <c:if test='${fromDateParam != ""}'> &fromDate=${fromDateParam}</c:if>
+			                <c:if test='${toDateParam != ""}'> &toDate=${toDateParam}</c:if>">
+			                Previous
+			            </a>
+			        </c:if>
+
+			        <!-- Page Numbers -->
+			        <c:forEach begin="0" end="${totalPages - 1}" var="i">
+			            <a class="page-btn ${i == currentPage ? 'active' : ''}" href="transactions?page=${i}
+			                <c:if test='${typeParam != ""}'> &type=${typeParam}</c:if>
+			                <c:if test='${categoryParam != ""}'> &category=${categoryParam}</c:if>
+			                <c:if test='${fromDateParam != ""}'> &fromDate=${fromDateParam}</c:if>
+			                <c:if test='${toDateParam != ""}'> &toDate=${toDateParam}</c:if>">
+			                ${i + 1}
+			            </a>
+			        </c:forEach>
+
+			        <!-- Next Button -->
+			        <c:if test="${currentPage < totalPages - 1}">
+			            <a class="page-btn" href="transactions?page=${currentPage + 1}
+			                <c:if test='${typeParam != ""}'> &type=${typeParam}</c:if>
+			                <c:if test='${categoryParam != ""}'> &category=${categoryParam}</c:if>
+			                <c:if test='${fromDateParam != ""}'> &fromDate=${fromDateParam}</c:if>
+			                <c:if test='${toDateParam != ""}'> &toDate=${toDateParam}</c:if>">
+			                Next
+			            </a>
+			        </c:if>
+
+			    </div>
+			</c:if>
+
+
+			
+
+
+			
         </div>
 
     </div>
@@ -572,7 +675,26 @@ java.util.List<com.pfm.entity.Category> ctgs =
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
+	
+	const buttons = document.querySelectorAll(".type-btn");
+	  	   buttons.forEach(btn => {
+	       btn.addEventListener("click", function () {
 
+	        
+	          document.getElementById("typeInput").value = this.dataset.type;
+
+	           
+	           buttons.forEach(b => b.classList.remove("active"));
+	           this.classList.add("active");
+	       });
+	   });
+
+	   function clearFilters() {
+		document.querySelectorAll(".type-btn")
+		        .forEach(btn => btn.classList.remove("active"));
+	       window.location.href = '/transactions';
+	   }
+	   
     document.querySelectorAll(".filter-group select").forEach(select => {
 
         // Prevent double enhancement
