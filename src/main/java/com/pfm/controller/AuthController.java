@@ -34,7 +34,7 @@ public class AuthController {
 	private EmailService emailService;
 	@Autowired
 	private OtpService otpService;
-	
+
 	@GetMapping("/register")
 	public String registerPage(Model model) {
 		model.addAttribute("register", new RegisterDTO());
@@ -42,16 +42,16 @@ public class AuthController {
 	}
 
 	@GetMapping("/login")
-	public String loginPage(Model model,@RequestParam(required = false)String error) {
+	public String loginPage(Model model, @RequestParam(required = false) String error) {
 		model.addAttribute("error", error);
 		return "login";
 	}
 
 	@PostMapping("/register")
 	public String registerUser(RegisterDTO register, Model model) throws MessagingException {
-		
+
 		Optional<User> opt = userRepo.findByEmail(register.getEmail());
-		
+
 		if (opt.isPresent()) {
 			model.addAttribute("error", "Already Registered");
 			return "login";
@@ -60,117 +60,110 @@ public class AuthController {
 			user.setEmail(register.getEmail());
 			user.setName(register.getName());
 			user.setPassword(passwordEncoder.encode(register.getPassword()));
-			
+
 			userRepo.save(user);
 
 			model.addAttribute("success", "Registered Successfully");
-			emailService.sendMailWithTemplate(register.getEmail(), "Welcome to application", register.getName());
-			
+			emailService.sendWelcomeMail(register.getEmail(), "Welcome to PFM Service", register.getName());
+
 			return "login";
 		}
 	}
-	
-	 @GetMapping("/forgot-password")
-	    public String forgotPasswordPage() {
-	        return "forgot-password";
-	    }
 
-	    @PostMapping("/send-otp")
-	    public String sendOtp(@RequestParam String email, Model model) {
-	        Optional<User> userEntity = userRepo.findByEmail(email);
+	@GetMapping("/forgot-password")
+	public String forgotPasswordPage() {
+		return "forgot-password";
+	}
 
-	        if (userEntity.isEmpty()) {
-	            model.addAttribute("error", "User not Registered!!");
-	            return "forgot-password";
-	        }
+	@PostMapping("/send-otp")
+	public String sendOtp(@RequestParam String email, Model model) {
+		Optional<User> userEntity = userRepo.findByEmail(email);
 
-	        otpService.generateAndSaveOtp(email);
-	        model.addAttribute("email", email);
-	        model.addAttribute("success", "OTP sent to your email");
-	        model.addAttribute("otpRemainingSeconds", 120);
+		if (userEntity.isEmpty()) {
+			model.addAttribute("error", "User not Registered!!");
+			return "forgot-password";
+		}
 
-	        return "verify-otp";
-	    }
+		otpService.generateAndSaveOtp(email);
+		model.addAttribute("email", email);
+		model.addAttribute("success", "OTP sent to your email");
+		model.addAttribute("otpRemainingSeconds", 120);
 
-	    @PostMapping("/verify-otp")
-	    public String verifyOtp(@RequestParam String email,
-	                            @RequestParam String otp,
-	                            Model model,
-	                            HttpSession session) {
+		return "verify-otp";
+	}
 
-	        Otp otpEntity = otpService.findByEmail(email);
+	@PostMapping("/verify-otp")
+	public String verifyOtp(@RequestParam String email, @RequestParam String otp, Model model, HttpSession session) {
 
-	        if (otpEntity == null || otpEntity.getExpiryTime().isBefore(LocalDateTime.now())) {
-	            model.addAttribute("email", email);
-	            model.addAttribute("error", "OTP expired! Please resend OTP.");
-	            model.addAttribute("otpRemainingSeconds", 0);
-	            return "verify-otp";
-	        }
+		Otp otpEntity = otpService.findByEmail(email);
 
-	        if (!otpEntity.getOtp().equals(otp)) {
-	            model.addAttribute("email", email);
-	            model.addAttribute("error", "Invalid OTP");
+		if (otpEntity == null || otpEntity.getExpiryTime().isBefore(LocalDateTime.now())) {
+			model.addAttribute("email", email);
+			model.addAttribute("error", "OTP expired! Please resend OTP.");
+			model.addAttribute("otpRemainingSeconds", 0);
+			return "verify-otp";
+		}
 
-	            int remaining = (int) Math.max(
-	                    0,
-	                    Duration.between(LocalDateTime.now(), otpEntity.getExpiryTime()).getSeconds()
-	            );
+		if (!otpEntity.getOtp().equals(otp)) {
+			model.addAttribute("email", email);
+			model.addAttribute("error", "Invalid OTP");
 
-	            model.addAttribute("otpRemainingSeconds", remaining);
-	            return "verify-otp";
-	        }
+			int remaining = (int) Math.max(0,
+					Duration.between(LocalDateTime.now(), otpEntity.getExpiryTime()).getSeconds());
 
-	        session.setAttribute("OTP_VERIFIED_EMAIL", email);
-	        otpService.deleteOtp(email);
+			model.addAttribute("otpRemainingSeconds", remaining);
+			return "verify-otp";
+		}
 
-	        return "reset-password";
-	    }
+		session.setAttribute("OTP_VERIFIED_EMAIL", email);
+		otpService.deleteOtp(email);
 
-	    @PostMapping("/reset-password")
-	    public String resetPassword(@RequestParam String newPassword,
-	                                @RequestParam String confirmPassword,
-	                                Model model,
-	                                HttpSession session) {
+		return "reset-password";
+	}
 
-	        String email = (String) session.getAttribute("OTP_VERIFIED_EMAIL");
+	@PostMapping("/reset-password")
+	public String resetPassword(@RequestParam String newPassword, @RequestParam String confirmPassword, Model model,
+			HttpSession session) {
 
-	        if (email == null) {
-	            model.addAttribute("error", "Session expired. Please try again.");
-	            return "login";
-	        }
+		String email = (String) session.getAttribute("OTP_VERIFIED_EMAIL");
 
-	        if (!newPassword.equals(confirmPassword)) {
-	            model.addAttribute("error", "Passwords do not match");
-	            return "reset-password";
-	        }
+		if (email == null) {
+			model.addAttribute("error", "Session expired. Please try again.");
+			return "login";
+		}
 
-	        Optional<User> optionalUser = userRepo.findByEmail(email);
-	        if (optionalUser.isEmpty()) {
-	            model.addAttribute("error", "User not found");
-	            return "reset-password";
-	        }
+		if (!newPassword.equals(confirmPassword)) {
+			model.addAttribute("error", "Passwords didn't matched");
+			return "reset-password";
+		}
 
-	        User user = optionalUser.get();
+		Optional<User> optionalUser = userRepo.findByEmail(email);
+		if (optionalUser.isEmpty()) {
+			model.addAttribute("error", "User not found");
+			return "reset-password";
+		}
 
-	        if (passwordEncoder.matches(newPassword, user.getPassword())) {
-	            model.addAttribute("error", "Please enter a new password. Old password cannot be reused.");
-	            return "reset-password";
-	        }
+		User user = optionalUser.get();
 
-	        user.setPassword(passwordEncoder.encode(newPassword));
-	        userRepo.save(user);
+		if (passwordEncoder.matches(newPassword, user.getPassword())) {
+			model.addAttribute("error", "Please enter a new password. Old password cannot be reused.");
+			return "reset-password";
+		}
 
-	        session.removeAttribute("OTP_VERIFIED_EMAIL");
+		user.setPassword(passwordEncoder.encode(newPassword));
+		userRepo.save(user);
 
-	        model.addAttribute("success", "Password updated successfully. Please login!");
-	        emailService.sendPasswordResetSuccessEmail(user.getEmail(), user.getName());
+		session.removeAttribute("OTP_VERIFIED_EMAIL");
 
-	        return "login";
-	    }
+		model.addAttribute("success", "Password updated successfully. Please login!");
+		emailService.sendPasswordResetSuccessEmail(user.getEmail(), user.getName());
 
-	    @GetMapping("/logout")
-	    public String logout(HttpSession session) {
-	        session.invalidate();
-	        return "redirect:/login?logout=true";
-	    }
+		return "login";
+	}
+
+	@GetMapping("/logout")
+	public String logout(HttpSession session) {
+		session.invalidate();
+		return "redirect:/login?logout=true";
+	}
 }

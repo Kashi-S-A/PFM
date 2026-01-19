@@ -4,7 +4,7 @@ import jakarta.mail.MessagingException;
 
 public interface EmailService {
 	
-	public void sendMailWithTemplate(String toEmail,String subject, String username) throws MessagingException;
+	public void sendWelcomeMail(String toEmail,String subject, String username) throws MessagingException;
 	
 	void sendOtpEmail(String toEmail, String otp);
 	

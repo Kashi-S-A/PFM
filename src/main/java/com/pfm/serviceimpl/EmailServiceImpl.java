@@ -27,7 +27,7 @@ public class EmailServiceImpl implements EmailService {
 	@Autowired
 	private HtmlEmailUtil htmlEmailUtil;
 
-	public void sendMailWithTemplate(String toEmail, String subject, String username) throws MessagingException {
+	public void sendWelcomeMail(String toEmail, String subject, String username) throws MessagingException {
 
 		String htmlContent = """
 				<!DOCTYPE html>
@@ -61,7 +61,7 @@ public class EmailServiceImpl implements EmailService {
 		MimeMessageHelper helper = new MimeMessageHelper(message, true);
 		helper.setTo(toEmail);
 		helper.setSubject(subject);
-		helper.setText(htmlContent, true);
+		helper.setText(htmlContent, true);//html code in body
 
 		javaMailSender.send(message);
 	}

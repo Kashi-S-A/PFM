@@ -675,7 +675,7 @@
                     %>
                 </tbody>
             </table>
-				<tbody>
+				<%-- <tbody>
 				    <c:choose>
 				        <c:when test="${not empty txns}">
 				            <c:forEach var="txn" items="${txns}">
@@ -707,7 +707,7 @@
 				        </c:otherwise>
 				    </c:choose>
 				</tbody>
-			</table>
+			</table> --%>
 
 			<!-- ===== PAGINATION ===== -->
 			<c:if test="${totalPages > 1}">

@@ -16,18 +16,14 @@ import lombok.Setter;
 @Setter
 public class Otp {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
 
 	private String email;
 
-    private String otp;
+	private String otp;
 
-    private LocalDateTime expiryTime;
+	private LocalDateTime expiryTime;
 
-
-
-
-    // getters & setters
 }

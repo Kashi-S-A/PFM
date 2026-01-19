@@ -24,13 +24,13 @@ public class Transaction {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer id;
-	
+
 	private Double amount;
-	
+
 	private String description;
-	
+
 	private LocalDate date;
-	
+
 	@Enumerated(EnumType.STRING)
 	private TxnType type;
 
@@ -39,8 +39,5 @@ public class Transaction {
 
 	@ManyToOne
 	private User user;
-
-	
-
 
 }
