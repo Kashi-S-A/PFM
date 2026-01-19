@@ -1,5 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
+	<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -198,26 +200,32 @@
         box-shadow: 0 10px 20px rgba(13,110,253,0.35);
     }
 
-    .register-link {
-        display: block;
-        text-align: center;
-        margin-top: 20px;
-        font-size: 14px;
-        color: #0d6efd;
-        text-decoration: none;
-    }
+	.auth-link {
+	    display: block;
+	    margin-top: 14px;
+	    font-size: 14px;
+	    color: #0d6efd;            /* Primary blue */
+	    text-decoration: none;
+		text-align: center;
+	    font-weight: 500;
+	    transition: all 0.3s ease;
+	}
 
-    .register-link:hover {
-        text-decoration: underline;
-    }
+	.auth-link:hover {
+	    text-decoration: underline;
+	    color: #084298;
+	}
 
-    .message {
-        text-align: center;
-        font-size: 13px;
-        margin-bottom: 10px;
-    }
+	.auth-link.muted {
+	    font-size: 13px;
+		text-align: center;
+	    color: #6c757d;
+	}
 
-   
+	.auth-link.muted:hover {
+	    color: #0d6efd;
+	}
+
     @media (max-width: 768px) {
         .container {
             flex-direction: column;
@@ -233,8 +241,37 @@
             display: none;
         }
     }
-</style>
+	
+	.message {
+	    display: flex;
+	    align-items: center;
+	    gap: 8px;
+	    padding: 10px 12px;
+	    border-radius: 10px;
+	    font-size: 13px;
+	    font-weight: 500;
+	    margin-bottom: 14px;
+	}
 
+	.message.success {
+	    background: #eaf7f0;
+	    color: #1e7e4f;
+	    border: 1px solid #cfeedd;
+	}
+
+	.message.error {
+	    background: #fdeeee;
+	    color: #b02a37;
+	    border: 1px solid #f5c2c7;
+	}
+
+	.message svg {
+	    width: 16px;
+	    height: 16px;
+	    flex-shrink: 0;
+	}
+	
+</style>
 </head>
 <body>
 
@@ -265,8 +302,33 @@
         <div class="login-container">
             <h2>Login</h2>
 
-            <div class="message" style="color:red">${error}</div>
-            <div class="message" style="color:green">${success}</div>
+			<c:if test="${not empty error}">
+			    <div class="message error" role="alert">
+			        <svg viewBox="0 0 24 24" fill="none">
+			            <circle cx="12" cy="12" r="10" fill="#dc3545"/>
+			            <path d="M12 7v6M12 16h.01"
+			                  stroke="#fff"
+			                  stroke-width="2"
+			                  stroke-linecap="round"/>
+			        </svg>
+			        ${error}
+			    </div>
+			</c:if>
+
+			<c:if test="${not empty success}">
+			    <div class="message success" role="status">
+			        <svg viewBox="0 0 24 24" fill="none">
+			            <circle cx="12" cy="12" r="10" fill="#2fbf71"/>
+			            <path d="M7 12.5l3 3 7-7"
+			                  stroke="#fff"
+			                  stroke-width="2"
+			                  stroke-linecap="round"
+			                  stroke-linejoin="round"/>
+			        </svg>
+			        ${success}
+			    </div>
+			</c:if>
+
 
             <form action="login" method="post">
                 <div class="form-group">
@@ -281,18 +343,19 @@
 
                 <button type="submit" class="login-btn">Login</button>
 
-                <a href="register" class="register-link">
-                    Don't have an account? Register Now
-                </a>
-				
-				<a href="forgot-password" class="register-link">
-								    Forgot Password?
-								</a>
+				<a href="register" class="auth-link">
+				    Don't have an account? Register Now
+				</a>
+
+				<a href="forgot-password" class="auth-link muted">
+				    Forgot Password?
+				</a>
+
             </form>
         </div>
     </div>
 
 </div>
-
 </body>
+
 </html>

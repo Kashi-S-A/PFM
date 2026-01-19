@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.pfm.dto.FilterTranscationDTO;
 import com.pfm.dto.TransactionDTO;
@@ -147,9 +148,19 @@ public class TransactionController {
 	}
 
 	@GetMapping("/delete")
-	public String deleteTransaction(@RequestParam Integer tid) {
-		transactionRepo.deleteById(tid);
-		return "redirect:/transactions";
+	public String deleteTransaction(@RequestParam Integer tid,
+	                                RedirectAttributes redirectAttributes) {
+
+	    transactionRepo.deleteById(tid);
+
+	    redirectAttributes.addFlashAttribute(
+	        "successMessage",
+	        "Transaction deleted successfully."
+	    );
+
+	    return "redirect:/transactions";
 	}
+	
+	
 
 }
