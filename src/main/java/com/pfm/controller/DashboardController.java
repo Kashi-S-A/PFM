@@ -42,9 +42,13 @@ public class DashboardController {
 	@GetMapping("/dashboard")
     public String dashboard(HttpSession session, Principal principal, Model model) {
 		
-        String email = principal.getName();
-        User user = userRepo.findByEmail(email)
-        		.orElseThrow(() -> new RuntimeException("User not found"));
+        String email = principal.getName();        
+        User user = userRepo.findByEmail(email).orElse(null);
+
+        if (user == null) {
+            return "redirect:/login?error=User not found";
+        }
+
         
         if (user != null) {
             session.setAttribute("userName", user.getName());

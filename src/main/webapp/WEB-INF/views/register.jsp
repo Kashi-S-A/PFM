@@ -34,7 +34,7 @@
 
     .register-container {
         width: 380px;
-        padding: 40px;
+        padding: 20px 40px 20px;
         border-radius: 18px;
         background: rgba(255, 255, 255, 0.88);
         backdrop-filter: blur(12px);
@@ -58,7 +58,8 @@
     .register-container h2 {
         text-align: center;
         font-size: 26px;
-        margin-bottom: 25px;
+        margin-top: 0;
+        margin-bottom: 20px;
         color: #222;
     }
 
@@ -268,6 +269,55 @@
             display: none;
         }
     }
+    
+/* 	OAuth */
+	.oauth-divider {
+    	display: flex;
+    	align-items: center;
+    	margin: 22px 0;
+    	color: #9ca3af;
+    	font-size: 13px;
+	}
+
+	.oauth-divider::before,
+	.oauth-divider::after {
+	    content: "";
+	    flex: 1;
+	    height: 1px;
+	    background: #e5e7eb;
+	}
+	
+	.oauth-divider span {
+	    padding: 0 10px;
+	}
+
+	.oauth-btn {
+	    width: 100%;
+	    display: flex;
+	    align-items: center;
+	    justify-content: center;
+	    gap: 10px;
+	    padding: 12px;
+	    border-radius: 12px;
+	    border: 1px solid #e5e7eb;
+	    background: #ffffff;
+	    font-size: 14px;
+	    font-weight: 600;
+    	color: #1e293b;
+	    cursor: pointer;
+	    text-decoration: none;
+	    transition: all 0.2s ease;
+	}
+	
+	.oauth-btn:hover {
+	    background: #f8fafc;
+	    box-shadow: 0 8px 18px rgba(0,0,0,0.08);
+	}
+	
+	.oauth-btn img {
+	    width: 18px;
+	    height: 18px;
+	}
 </style>
 
 <script>
@@ -321,7 +371,16 @@
                 </div>
 
                 <button type="submit" class="register-btn">Register</button>
+                
+                <div class="oauth-divider">
+				    <span>OR</span>
+				</div>
 
+				<a href="/oauth2/authorization/google" class="oauth-btn">
+				    <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google">
+				    Sign up with Google
+				</a>
+                
                 <a href="login" class="login-link">
                     Already registered? Login here
                 </a>

@@ -11,6 +11,7 @@ import org.springframework.security.web.SecurityFilterChain;
 
 import com.pfm.entity.User;
 import com.pfm.repo.UserRepo;
+import com.pfm.serviceimpl.CustomOAuth2UserService;
 
 @Configuration
 @EnableWebSecurity
@@ -19,6 +20,8 @@ public class SecurityConfig {
 	@Autowired
 	private UserRepo userRepo;
 	
+	private CustomOAuth2UserService customOAuth2UserService;
+
 	@Bean
 	public PasswordEncoder getEncoder() {
 		return new BCryptPasswordEncoder();
@@ -65,6 +68,37 @@ public class SecurityConfig {
 	        .logout(l -> l.logoutUrl("/logout"));
 
 	    return http.build();
+	public SecurityFilterChain getFilterChain(HttpSecurity http) {
+		
+		http.csrf( c->c.disable())
+			.authorizeHttpRequests(req -> req
+					.requestMatchers("/register","/login","/oauth2/**",
+				            "/forgot-password",
+				            "/send-otp",
+				            "/verify-otp",
+				            "/reset-password")
+					.permitAll()
+					.requestMatchers("/WEB-INF/**")
+					.permitAll()
+					.anyRequest()
+					.authenticated()
+				).formLogin( l -> l
+						.loginPage("/login")//GET
+						.loginProcessingUrl("/login")//POST
+						.defaultSuccessUrl("/dashboard")
+						.failureUrl("/login?error=Invalid Credentials"))//GET
+				.oauth2Login(oauth -> oauth
+					.loginPage("/login")
+					.userInfoEndpoint(userInfo ->
+							userInfo.userService(customOAuth2UserService)
+					)
+					.defaultSuccessUrl("/dashboard", true)
+				)
+
+				.logout(l -> l
+						.logoutUrl("/logout"));
+		
+		return http.build();
 	}
 
 }
