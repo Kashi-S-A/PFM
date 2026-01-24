@@ -1,12 +1,32 @@
-insert into category values(1,'Shopping','EXPENSE');
-insert into category values(2,'Movie','EXPENSE');
-insert into category values(3,'Salary','INCOME');
-insert into category values(4,'Travel','EXPENSE');
-insert into category values(5,'EMI','EXPENSE');
-insert into category values(6,'Groceries','EXPENSE');
-insert into category values(7,'Mobile Recharge','EXPENSE');
-insert into category values(8,'Rent','EXPENSE');
-insert into category values(9,'Food','EXPENSE');
-insert into category values(10,'Bills','EXPENSE');
-insert into category values(11,'Other Expense','EXPENSE');
-insert into category values(12,'Other Income','INCOME');
+/*for mysql*/
+INSERT IGNORE INTO category (id, name, type) VALUES
+(1,'Shopping','EXPENSE'),
+(2,'Movie','EXPENSE'),
+(3,'Salary','INCOME'),
+(4,'Travel','EXPENSE'),
+(5,'EMI','EXPENSE'),
+(6,'Groceries','EXPENSE'),
+(7,'Mobile Recharge','EXPENSE'),
+(8,'Rent','EXPENSE'),
+(9,'Food','EXPENSE'),
+(10,'Bills','EXPENSE'),
+(11,'Other Expense','EXPENSE'),
+(12,'Other Income','INCOME');
+
+/*
+For postgresql
+INSERT INTO category (id, name, type) VALUES
+(1,'Shopping','EXPENSE'),
+(2,'Movie','EXPENSE'),
+(3,'Salary','INCOME'),
+(4,'Travel','EXPENSE'),
+(5,'EMI','EXPENSE'),
+(6,'Groceries','EXPENSE'),
+(7,'Mobile Recharge','EXPENSE'),
+(8,'Rent','EXPENSE'),
+(9,'Food','EXPENSE'),
+(10,'Bills','EXPENSE'),
+(11,'Other Expense','EXPENSE'),
+(12,'Other Income','INCOME')
+ON CONFLICT (id) DO NOTHING;
+*/
