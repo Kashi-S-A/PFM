@@ -161,6 +161,7 @@
 
     </div>
 </div>
+<jsp:include page="header.jsp"/>
 
 <script>
 /* ================= CHART 1: CATEGORY PIE ================= */
