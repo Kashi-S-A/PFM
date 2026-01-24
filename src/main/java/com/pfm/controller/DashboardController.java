@@ -48,6 +48,7 @@ public class DashboardController {
         
         if (user != null) {
             session.setAttribute("userName", user.getName());
+//            session.setAttribute("userId", user.getId());
         }
         
      //Chart 1: Fetch filtered EXPENSE transactions 
