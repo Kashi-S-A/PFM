@@ -1,4 +1,4 @@
-/*for mysql*/
+/*for mysql
 INSERT IGNORE INTO category (id, name, type) VALUES
 (1,'Shopping','EXPENSE'),
 (2,'Movie','EXPENSE'),
@@ -12,9 +12,11 @@ INSERT IGNORE INTO category (id, name, type) VALUES
 (10,'Bills','EXPENSE'),
 (11,'Other Expense','EXPENSE'),
 (12,'Other Income','INCOME');
+*/
 
 /*
 For postgresql
+*/
 INSERT INTO category (id, name, type) VALUES
 (1,'Shopping','EXPENSE'),
 (2,'Movie','EXPENSE'),
@@ -29,4 +31,3 @@ INSERT INTO category (id, name, type) VALUES
 (11,'Other Expense','EXPENSE'),
 (12,'Other Income','INCOME')
 ON CONFLICT (id) DO NOTHING;
-*/
