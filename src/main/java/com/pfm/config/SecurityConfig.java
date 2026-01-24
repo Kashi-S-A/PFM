@@ -20,6 +20,7 @@ public class SecurityConfig {
 	@Autowired
 	private UserRepo userRepo;
 	
+	@Autowired
 	private CustomOAuth2UserService customOAuth2UserService;
 
 	@Bean
@@ -44,7 +45,8 @@ public class SecurityConfig {
 	                "/send-otp",
 	                "/verify-otp",
 	                "/reset-password",
-	                "/ai/**"
+	                "/ai/**",
+	                "/oauth2/**"
 	            ).permitAll()
 	            .requestMatchers("/WEB-INF/**").permitAll()
 	            .anyRequest().authenticated()
@@ -62,43 +64,18 @@ public class SecurityConfig {
 	        	        }
 	        	        response.sendRedirect("/dashboard");
 	        	    })
+	        	    .failureUrl("/login?error=Invalid Credentials")//GET
 	        	)
-
-
-	        .logout(l -> l.logoutUrl("/logout"));
-
-	    return http.build();
-	public SecurityFilterChain getFilterChain(HttpSecurity http) {
-		
-		http.csrf( c->c.disable())
-			.authorizeHttpRequests(req -> req
-					.requestMatchers("/register","/login","/oauth2/**",
-				            "/forgot-password",
-				            "/send-otp",
-				            "/verify-otp",
-				            "/reset-password")
-					.permitAll()
-					.requestMatchers("/WEB-INF/**")
-					.permitAll()
-					.anyRequest()
-					.authenticated()
-				).formLogin( l -> l
-						.loginPage("/login")//GET
-						.loginProcessingUrl("/login")//POST
-						.defaultSuccessUrl("/dashboard")
-						.failureUrl("/login?error=Invalid Credentials"))//GET
-				.oauth2Login(oauth -> oauth
+	        .oauth2Login(oauth -> oauth
 					.loginPage("/login")
 					.userInfoEndpoint(userInfo ->
 							userInfo.userService(customOAuth2UserService)
 					)
 					.defaultSuccessUrl("/dashboard", true)
 				)
+	        .logout(l -> l.logoutUrl("/logout"));
 
-				.logout(l -> l
-						.logoutUrl("/logout"));
-		
-		return http.build();
+	    return http.build();
 	}
 
 }
