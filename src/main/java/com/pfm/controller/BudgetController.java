@@ -17,6 +17,7 @@ import com.pfm.entity.User;
 import com.pfm.repo.BudgetRepo;
 import com.pfm.repo.CategoryRepo;
 import com.pfm.repo.UserRepo;
+import com.pfm.service.FinanceSummaryService;
 
 @Controller
 public class BudgetController {
@@ -27,6 +28,8 @@ public class BudgetController {
 	@Autowired
 	private BudgetRepo budgetRepo;
 	
+	@Autowired
+	private FinanceSummaryService financeSummaryService;
 	
 	@Autowired
 	private UserRepo userRepo;
@@ -36,6 +39,9 @@ public class BudgetController {
 		model.addAttribute("bdg", new BudgetDTO());
 		List<Category> categories = categoryRepo.findAll();
 		model.addAttribute("categories", categories);
+		
+		Integer uid = getUid(principal);
+
 		
 		if (successMsg!=null) {
 			model.addAttribute("successMsg", successMsg);
@@ -49,6 +55,9 @@ public class BudgetController {
 		List<Budget> budgets = budgetRepo.findByUserId(user.getId());
 		
 		model.addAttribute("budgets", budgets);
+		
+	    financeSummaryService.evictSummary(uid);
+
 	    
 		return "budget";
 	}
@@ -71,5 +80,12 @@ public class BudgetController {
 		budgetRepo.save(budget);
 		
 		return "redirect:/budget?successMsg=Budget saved successfully!";
+	}
+	
+	private Integer getUid(Principal principal) {
+	    String email = principal.getName();
+	    return userRepo.findByEmail(email)
+	            .orElseThrow(() -> new RuntimeException("User not found"))
+	            .getId();
 	}
 }
