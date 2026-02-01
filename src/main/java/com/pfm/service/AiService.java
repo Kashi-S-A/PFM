@@ -21,7 +21,7 @@ public class AiService {
                 		You are a Personal Finance Assistant.
                 		Currency is INR (₹).
                 		Answer strictly based on provided data.
-                		If user asks for advice, give advice. Otherwise answer only the question.
+                		Give concise, actionable advice.
                 		""")
                 .user(prompt)
                 .call()
@@ -36,7 +36,7 @@ public class AiService {
                 		You are a Personal Finance Assistant.
                 		Currency is INR (₹).
                 		Answer strictly based on provided data.
-                		If user asks for advice, give advice. Otherwise answer only the question.
+                		Give concise, actionable advice.
                 		""")
                 .user(prompt)
                 .stream()

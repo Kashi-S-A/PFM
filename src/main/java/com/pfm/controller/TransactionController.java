@@ -21,6 +21,7 @@ import com.pfm.entity.User;
 import com.pfm.repo.CategoryRepo;
 import com.pfm.repo.TransactionRepo;
 import com.pfm.repo.UserRepo;
+import com.pfm.service.FinanceSummaryService;
 import com.pfm.service.TransactionService;
 
 @Controller
@@ -37,6 +38,9 @@ public class TransactionController {
 
 	@Autowired
 	private TransactionService transactionService;
+	
+	@Autowired
+	private FinanceSummaryService financeSummaryService;
 
 	@GetMapping("/addtransaction")
 	public String addtransaction(Model model, @RequestParam(required = false) String msg) {
@@ -50,6 +54,11 @@ public class TransactionController {
 
 	@PostMapping("/addtransaction")
 	public String postMethodName(Principal principal, TransactionDTO txn) {
+		
+		 if (principal == null) return "redirect:/login";
+		 
+		 Integer uid = getUid(principal);
+		
 		Transaction transaction = new Transaction();
 		transaction.setAmount(txn.getAmount());
 		transaction.setDescription(txn.getDescription());
@@ -68,6 +77,8 @@ public class TransactionController {
 		transaction.setUser(user);
 		transactionRepo.save(transaction);
 
+		// refresh cache AFTER save
+	    financeSummaryService.evictSummary(uid);
 		return "redirect:/addtransaction?msg=Transaction Added";
 	}
 
@@ -129,8 +140,10 @@ public class TransactionController {
 	}
 
 	@PostMapping("/edittransaction")
-	public String EditTransaction(TransactionDTO dto) {
+	public String EditTransaction(TransactionDTO dto, Principal principal) {
 
+		Integer uid = getUid(principal);
+		
 		Transaction txn = transactionRepo.findById(dto.getId())
 				.orElseThrow(() -> new RuntimeException("Txn not found"));
 
@@ -142,15 +155,17 @@ public class TransactionController {
 				.orElseThrow(() -> new RuntimeException("Txn not found"));
 		txn.setCategory(category);
 		txn.setType(category.getType());
-
+		
 		transactionRepo.save(txn);
+		financeSummaryService.evictSummary(uid);
 		return "redirect:/transactions";
 	}
 
 	@GetMapping("/delete")
 	public String deleteTransaction(@RequestParam Integer tid,
-	                                RedirectAttributes redirectAttributes) {
+	                                RedirectAttributes redirectAttributes, Principal principal) {
 
+		Integer uid = getUid(principal);
 	    transactionRepo.deleteById(tid);
 
 	    redirectAttributes.addFlashAttribute(
@@ -158,9 +173,17 @@ public class TransactionController {
 	        "Transaction deleted successfully."
 	    );
 
+
+	    financeSummaryService.evictSummary(uid);
 	    return "redirect:/transactions";
 	}
 	
-	
+	private Integer getUid(Principal principal) {
+	    String email = principal.getName();
+	    return userRepo.findByEmail(email)
+	            .orElseThrow(() -> new RuntimeException("User not found"))
+	            .getId();
+	}
+
 
 }

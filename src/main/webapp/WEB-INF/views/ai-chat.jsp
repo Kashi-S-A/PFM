@@ -1,4 +1,4 @@
-<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ page contentType="text/html;charset=UTF-8" isELIgnored="true" %>
 <!DOCTYPE html>
 <html>
 <head>
@@ -56,9 +56,9 @@ body{margin:0;background:#f1f5f9}
 }
 
 .msg.ai .ai-text{
-	white-space: pre-wrap;
-	word-break: break-word;
-	line-height: 1.65;
+  white-space:pre-wrap;
+  word-break:break-word;
+  line-height:1.65;
 }
 
 .section-title{
@@ -122,58 +122,83 @@ body{margin:0;background:#f1f5f9}
 </div>
 
 <script>
+var CTX = "<%= request.getContextPath() %>";
+
 function escapeHtml(s){
-  return (s||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
+  return (s||"")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;");
 }
 
-function normalizeSpacing(t){
+function normalizeText(t){
   return (t||"")
+    .replace(/\r/g, "")
     .replace(/\s+([,.:;!?])/g, "$1")
     .replace(/₹\s+/g, "₹")
     .replace(/(\d)\s*,\s*(\d)/g, "$1,$2")
     .replace(/(\d)\s*\.\s*(\d)/g, "$1.$2")
-    .replace(/\(\s+/g, "(")
-    .replace(/\s+\)/g, ")")
     .replace(/[ \t]{2,}/g, " ");
 }
 
-function toPrettyHtml(fullText){
-  var t = normalizeSpacing(fullText);
+function boldLabel(line){
+  // Bold "Something:" at start (after escaping)
+  return line.replace(/^([A-Za-z][A-Za-z0-9 \/\-\(\)&]+)\s*:\s*/g, "<b>$1</b>: ");
+}
 
-  t = t.replace(/\*\*/g, "");
-  t = t.replace(/📌/g, "\n📌").replace(/📊/g, "\n📊").replace(/✅/g, "\n✅").replace(/🎯/g, "\n🎯");
+
+function toPrettyHtml(fullText){
+  var t = normalizeText(fullText || "");
+
+  // markdown bold markers
+  t = t.replace(/\*\*(.+?)\*\*/g, "__BOLD__$1__ENDBOLD__");
+
+  // headings to new lines
+  t = t.replace(/📌/g, "\n📌")
+       .replace(/📊/g, "\n📊")
+       .replace(/✅/g, "\n✅")
+       .replace(/🎯/g, "\n🎯")
+       .replace(/📈/g, "\n📈");
+
+  // bullets to new line
   t = t.replace(/\s+•\s+/g, "\n• ");
 
-  // mark money before escaping
-  t = t.replace(/₹[\d,]+(\.\d+)?/g, function(m){ return "__MONEY__" + m + "__ENDMONEY__"; });
+  // money markers
+  t = t.replace(/₹[\d,]+(\.\d+)?/g, function(m){
+    return "__MONEY__" + m + "__ENDMONEY__";
+  });
 
   var safe = escapeHtml(t);
 
-  safe = safe.replaceAll("__MONEY__", '<span class="money">').replaceAll("__ENDMONEY__", "</span>");
+  safe = safe.replaceAll("__BOLD__", "<b>")
+             .replaceAll("__ENDBOLD__", "</b>");
 
-  var lines = safe.split("\n").map(function(x){ return x.trim(); }).filter(function(x){ return x.length; });
+  safe = safe.replaceAll("__MONEY__", '<span class="money">')
+             .replaceAll("__ENDMONEY__", "</span>");
+
+  var lines = safe.split("\n").map(function(x){ return x.trim(); }).filter(Boolean);
 
   var html = "";
-  for(var i=0;i<lines.length;i++){
+  for (var i=0; i<lines.length; i++){
     var line = lines[i];
 
-    if(line.startsWith("📌") || line.startsWith("📊") || line.startsWith("✅") || line.startsWith("🎯")){
+    if (line.startsWith("📌") || line.startsWith("📊") || line.startsWith("✅") || line.startsWith("🎯") || line.startsWith("📈")){
       html += '<div class="section-title">' + line + '</div>';
       continue;
     }
-
-    if(line.startsWith("• ")){
-      html += '<span class="bullet">' + line.substring(2) + '</span>';
+    if (line.startsWith("• ")){
+		html += '<span class="bullet">' + boldLabel(line.substring(2)) + '</span>';	  
       continue;
     }
-
-    // numbered list -> bullet
-    if(/^\d+\.\s+/.test(line)){
+    if (/^\d+\.\s+/.test(line)){
       html += '<span class="bullet">' + line.replace(/^\d+\.\s+/, "") + '</span>';
       continue;
     }
-
-    html += '<div>' + line + '</div>';
+    if (line.startsWith("- ")){
+      html += '<span class="bullet">' + line.substring(2) + '</span>';
+      continue;
+    }
+	html += '<div>' + boldLabel(line) + '</div>';
   }
 
   return html || "<div>…</div>";
@@ -202,52 +227,34 @@ function send(){
   chat.scrollTop = chat.scrollHeight;
   input.value = "";
 
-  var url = "${pageContext.request.contextPath}/ai/ask-stream?question=" + encodeURIComponent(q);
+  var url = CTX + "/ai/ask-stream?question=" + encodeURIComponent(q);
   var es = new EventSource(url);
 
   var buffer = "";
-  var lastRender = 0;
-  var RENDER_MS = 120;
-
-  function render(force){
-    var now = Date.now();
-    if(!force && (now - lastRender) < RENDER_MS) return;
-    lastRender = now;
-    aiText.innerHTML = toPrettyHtml(buffer);
-    chat.scrollTop = chat.scrollHeight;
-  }
 
   es.onmessage = function(e){
-    const token = e.data ?? "";
+    if (typing) typing.remove();
 
-    // ✅ Add space ONLY when needed
-    const last = buffer.length ? buffer[buffer.length - 1] : "";
+    try {
+      var obj = JSON.parse(e.data);
+      buffer += (obj.t || "");
+    } catch(err) {
+      buffer += (e.data || "");
+    }
 
-    const needsSpace =
-      last &&
-      last !== "\n" &&
-      !/\s/.test(last) &&
-      !/^[,.:;!?)]/.test(token) &&
-      !/[('₹]/.test(last) &&
-      !/^\d/.test(token);
-
-    if (needsSpace) buffer += " ";
-
-    buffer += token;
-
-    aiText.textContent = buffer; 
+    aiText.innerHTML = toPrettyHtml(buffer);
     chat.scrollTop = chat.scrollHeight;
   };
 
   es.onerror = function(){
     es.close();
-    render(true);
-    if(typing) typing.remove();
+    if (typing) typing.remove();
+    if (!buffer) aiText.innerHTML = "<div>⚠️ Server error / stream closed. Check backend logs.</div>";
   };
 }
 
 document.getElementById("question").addEventListener("keydown", function(e){
-  if(e.key === "Enter") send();
+  if (e.key === "Enter") send();
 });
 </script>
 
