@@ -1,5 +1,7 @@
 package com.pfm.service;
 
+import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,10 +27,14 @@ public class FinanceSummaryService {
 	private BudgetRepo budgetRepo;
 	
     // cache per user 
-	@Cacheable(value = "financeSummary", key = "#uid")
-	public FinanceSummary getSummary(Integer uid) {
+	@Cacheable(value = "financeSummary", key = "#uid + '-' + #month + '-' + #year")
+	public FinanceSummary getSummary(Integer uid, int month, int year) {
 		
-		 List<Transaction> txns = transactionRepo.findByUserId(uid);
+		YearMonth ym = java.time.YearMonth.of(year, month);
+		LocalDate fromtDate = ym.atDay(1);
+		LocalDate toDate = ym.atEndOfMonth();
+		
+		 List<Transaction> txns = transactionRepo.findByUserIdAndDateBetween(uid, fromtDate, toDate);
 		 List<Budget> budgets = budgetRepo.findByUserId(uid);
 		 
 		 double totalIncome = 0.0, totalExpense = 0.0;
@@ -66,29 +72,25 @@ public class FinanceSummaryService {
 		 			.forEach(e -> expenseSummary.append(e.getKey())
 		 					.append(": ₹").append(String.format("%,.2f", e.getValue())).append("\n"));        
 		 
+		// budgets for current month only
 	        StringBuilder budgetSummary = new StringBuilder();
 	        if(budgets != null && !budgets.isEmpty()) {
 	        	for(Budget b : budgets) {
+	        		if(b.getMonth() != month || b.getYear() != year) continue;
 	        		String bcat = (b.getCategory() != null) ? b.getCategory().getName() : "Unknown";
 	        		budgetSummary.append(bcat)
 	        					.append(": ₹").append(String.format("%,.2f", b.getAmount()))
 	        					.append(" (").append(b.getMonth()).append(" ").append(b.getYear()).append(")")
 	        					.append("\n");
 	        	}
+	        	if(budgetSummary.length() == 0) budgetSummary.append("Not Available\n");
 	        } else {
 	        	budgetSummary.append("Not Available\n");
 	        }
 	        
-	// ===== Budget vs Actual (current month/year) =====
-	        java.time.YearMonth now = java.time.YearMonth.now();
-	        int m = now.getMonthValue();
-	        int y = now.getYear();
-	        
+// ===== Budget vs Actual (current month) =====
 	        Map<String, Double> actualThisMonthByCat = new HashMap<>();
 	        for (Transaction t : txns) {
-	            if (t.getDate() == null) continue;
-	            if (t.getDate().getMonthValue() != m || t.getDate().getYear() != y) continue;
-
 	            TxnType type = (t.getCategory() != null && t.getCategory().getType() != null)
 	                    ? t.getCategory().getType()
 	                    : TxnType.EXPENSE;
@@ -103,7 +105,7 @@ public class FinanceSummaryService {
 
 	        if (budgets != null && !budgets.isEmpty()) {
 	            for (Budget b : budgets) {
-	                if (b.getMonth() != m || b.getYear() != y) continue;
+	                if (b.getMonth() != month || b.getYear() != year) continue;
 
 	                String cat = (b.getCategory() != null) ? b.getCategory().getName() : "Unknown";
 	                double budgetAmt = b.getAmount();
@@ -123,28 +125,28 @@ public class FinanceSummaryService {
 	                            .append("\n");
 	                }
 	            }
+	            if (budgetVsActual.length() == 0) budgetVsActual.append("Not Available\n");
+	            if (overspend.length() == 0) overspend.append("None 🎉\n");
 	        } else {
 	            budgetVsActual.append("Not Available\n");
 	            overspend.append("Not Available\n");
 	        }
 
 	        // ===== Trend (this month vs last month total expense) =====
-	        java.time.YearMonth last = now.minusMonths(1);
-	        double thisMonthExpense = 0.0;
-	        double lastMonthExpense = 0.0;
-
-	        for (Transaction t : txns) {
-	            if (t.getDate() == null) continue;
-	            TxnType type = (t.getCategory() != null && t.getCategory().getType() != null)
-	                    ? t.getCategory().getType()
-	                    : TxnType.EXPENSE;
-	            if (type != TxnType.EXPENSE) continue;
-
-	            var ym = java.time.YearMonth.from(t.getDate());
-	            if (ym.equals(now)) thisMonthExpense += t.getAmount();
-	            if (ym.equals(last)) lastMonthExpense += t.getAmount();
-	        }
-
+	        YearMonth now = ym;
+	        YearMonth last = ym.minusMonths(1);
+	        
+	     // get last month expenses from DB (recommended)
+	        List<Transaction> lastMonthTxns = transactionRepo.findByUserIdAndDateBetween(uid, last.atDay(1), last.atEndOfMonth());
+	        
+	        double thisMonthExpense = txns.stream()
+	        		.filter(t -> t.getCategory() != null && t.getCategory().getType() == TxnType.EXPENSE)
+	        		.mapToDouble(Transaction::getAmount).sum();
+	        
+	        double lastMonthExpense = lastMonthTxns.stream()
+	        		.filter(t -> t.getCategory() != null && t.getCategory().getType() == TxnType.EXPENSE)
+	        		.mapToDouble(Transaction::getAmount).sum();
+	        
 	        StringBuilder trend = new StringBuilder();
 	        trend.append("This month: ₹").append(String.format("%,.2f", thisMonthExpense)).append("\n")
 	             .append("Last month: ₹").append(String.format("%,.2f", lastMonthExpense)).append("\n");
@@ -158,7 +160,7 @@ public class FinanceSummaryService {
 
 	        double net = totalIncome - totalExpense;
 	        
-	     // ✅ LIMIT TEXT (keeps prompt small + fast)
+	     // LIMIT TEXT (keeps prompt small + fast)
 	        String income = topNLines(incomeSummary.toString(), 5);
 	        String expense = topNLines(expenseSummary.toString(), 8);
 	        String budget = topNLines(budgetSummary.toString(), 8);
@@ -169,10 +171,9 @@ public class FinanceSummaryService {
 	        String trendTrim = topNLines(trend.toString(), 6);
 
 	        return new FinanceSummary(
+	        		month, year,
 	        	    totalIncome, totalExpense, net,
-	        	    income,
-	        	    expense,
-	        	    budget,
+	        	    income, expense, budget,
 	        	    budgetVsActualTrim,
 	        	    overspendTrim,
 	        	    trendTrim,

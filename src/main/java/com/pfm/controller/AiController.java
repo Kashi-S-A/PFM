@@ -1,6 +1,7 @@
 package com.pfm.controller;
 
 import java.security.Principal;
+import java.time.YearMonth;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,7 +63,8 @@ public class AiController {
 	 	Integer uid = getUid(principal);
 
 	 	//Redis cached
-		   FinanceSummary s = financeSummaryService.getSummary(uid);
+	 	YearMonth ym = YearMonth.now();
+	 	FinanceSummary s = financeSummaryService.getSummary(uid, ym.getMonthValue(), ym.getYear());
 
 		   String prompt = """
 				   You are a Personal Finance Assistant for an Indian user. Currency is INR (₹).
@@ -193,7 +195,8 @@ public class AiController {
 		    if (user == null) return Flux.just("Please login again.");
 
 		 //Redis cached 
-		   FinanceSummary s = financeSummaryService.getSummary(uid);
+		    YearMonth ym = YearMonth.now();
+		    FinanceSummary s = financeSummaryService.getSummary(uid, ym.getMonthValue(), ym.getYear());
 		    
 		   String prompt = """
 				   You are a Personal Finance Assistant for an Indian user. Currency is INR (₹).
