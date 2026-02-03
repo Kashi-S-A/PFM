@@ -160,7 +160,7 @@ public class TransactionController {
 		financeSummaryService.evictSummary(uid);
 		return "redirect:/transactions";
 	}
-
+ 
 	@GetMapping("/delete")
 	public String deleteTransaction(@RequestParam Integer tid,
 	                                RedirectAttributes redirectAttributes, Principal principal) {

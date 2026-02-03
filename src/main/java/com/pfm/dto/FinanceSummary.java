@@ -6,6 +6,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class FinanceSummary {
+	
+	private int month;
+	private int year;
 
 	public double totalIncome;
 	public double totalExpense;

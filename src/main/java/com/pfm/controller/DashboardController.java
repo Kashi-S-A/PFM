@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -20,6 +21,7 @@ import com.pfm.repo.BudgetRepo;
 import com.pfm.repo.CategoryRepo;
 import com.pfm.repo.TransactionRepo;
 import com.pfm.repo.UserRepo;
+import com.pfm.service.FinanceSummaryService;
 
 import jakarta.servlet.http.HttpSession;
 
@@ -39,26 +41,29 @@ public class DashboardController {
 	@Autowired
 	private TransactionRepo transactionRepo;
 	
+	@Autowired
+	private FinanceSummaryService financeSummaryService;
+	
 	@GetMapping("/dashboard")
     public String dashboard(HttpSession session, Principal principal, Model model) {
 		
         String email = principal.getName();        
         User user = userRepo.findByEmail(email).orElse(null);
-
+        
+		Integer uid = getUid(principal);
+		
         if (user == null) {
             return "redirect:/login?error=User not found";
         }
-
-        
-        if (user != null) {
+ 
             session.setAttribute("userName", user.getName());
-//            session.setAttribute("userId", user.getId());
-        }
         
-     //Chart 1: Fetch filtered EXPENSE transactions 
-        LocalDate fromDate = LocalDate.now().withDayOfMonth(1);
-        LocalDate toDate = LocalDate.now();
+     //FULL current month range
+        java.time.YearMonth ym = java.time.YearMonth.now();
+        LocalDate fromDate = ym.atDay(1);
+        LocalDate toDate   = ym.atEndOfMonth();
         
+// Chart 1: Category-wise Expense
         List<Transaction> expenses = transactionRepo.findByUserIdAndTypeAndDateBetween(
         		user.getId(), 
         		TxnType.EXPENSE, 
@@ -69,19 +74,18 @@ public class DashboardController {
         //Chart 1: Calculate category-wise totals
         Map<String, Double> categoryExpenseMap = new LinkedHashMap<>();
         for(Transaction t : expenses) {
-        	String category = t.getCategory().getName();
-        	Double amount = t.getAmount();
+        	String category = (t.getCategory() != null) ? t.getCategory().getName() : "Uncategorized";
         	
         	categoryExpenseMap.put(
         			category, 
-        			categoryExpenseMap.getOrDefault(category, 0.0) + amount
+        			categoryExpenseMap.getOrDefault(category, 0.0) + t.getAmount()
         			);
         }
         
         //Send data to JSP
         model.addAttribute("categoryExpenseMap", categoryExpenseMap);
         
-      //Chart 2:INCOME vs EXPENSE :- Fetch filtered INC transactions, EXP is already filtered above
+//Chart 2:INCOME vs EXPENSE :- Fetch filtered INC transactions, EXP is already filtered above
         List<Transaction> incomes = transactionRepo.findByUserIdAndTypeAndDateBetween(
         		user.getId(),
         		TxnType.INCOME,
@@ -104,9 +108,10 @@ public class DashboardController {
         model.addAttribute("totalIncome", totalIncome);
         model.addAttribute("totalExpense", totalExpense);
         
-      //Chart 3: Expense Trend-Line - expenses change over time, as expenses is already fetched above
-        Map<LocalDate, Double> dateExpenseMap = new LinkedHashMap<>();
+//Chart 3: Expense Trend-Line - expenses change over time, as expenses is already fetched above
+        Map<LocalDate, Double> dateExpenseMap = new TreeMap<>();
         for(Transaction e : expenses) {
+        	if (e.getDate() == null) continue;
         		dateExpenseMap.put(
         				e.getDate(), 
         				dateExpenseMap.getOrDefault(e.getDate(), 0.0) + e.getAmount()
@@ -115,26 +120,34 @@ public class DashboardController {
         
         model.addAttribute("dateExpenseMap", dateExpenseMap);
 
-        //CHART 4: BUDGET vs EXPENSE 
+//CHART 4: BUDGET vs EXPENSE 
+        
+       // budgets are stored with month/year in your Budget table
+        int m = ym.getMonthValue();
+        int y = ym.getYear();
+        
         List<Budget> budgets = budgetRepo.findByUserId(user.getId());//Logged in users budget 
-        List<Transaction> expense = transactionRepo.findByUserId(user.getId());//Logged in users budget 
-
         
         Map<String , Double> budgetMap = new LinkedHashMap<>();
         for(Budget b : budgets) {
-        	budgetMap.put(b.getCategory().getName(), b.getAmount());
+        	if (b.getMonth() != m || b.getYear() != y) continue;
+        	String cat = (b.getCategory() != null) ? b.getCategory().getName() : "Unknown";
+        	budgetMap.put(cat, b.getAmount());
         }
         
+     // Expenses already filtered for this month above ✅
         Map<String, Double> expenseMap = new LinkedHashMap<>();
-        for(Transaction e : expense) {
-        	String category = e.getCategory().getName();
+        for(Transaction e : expenses) {
+        	String cat = (e.getCategory() != null) ? e.getCategory().getName() : "Uncategorized";
         	expenseMap.put(
-        			category, 
-        			expenseMap.getOrDefault(category, 0.0) + e.getAmount());
+        			cat, 
+        			expenseMap.getOrDefault(cat, 0.0) + e.getAmount());
         }
         
         model.addAttribute("budgetMap", budgetMap);
         model.addAttribute("expenseMap", expenseMap);
+        
+        financeSummaryService.evictSummary(uid);
         
         return "dashboard";
     }
@@ -146,4 +159,12 @@ public class DashboardController {
 		
 		return "category";
 	}
+	
+	private Integer getUid(Principal principal) {
+	    String email = principal.getName();
+	    return userRepo.findByEmail(email)
+	            .orElseThrow(() -> new RuntimeException("User not found"))
+	            .getId();
+	}
+
 }
